@@ -20,6 +20,10 @@ jobs:
 
     - uses: actions/checkout@v2
 
+    - name: Install melpazoid
+      run: |
+        git clone https://github.com/riscy/melpazoid.git ~/melpazoid
+
     - name: Byte compile
       run: |
         emacs -Q --batch -L . --eval "(setq byte-compile-error-on-warn t)" -f batch-byte-compile *.el
@@ -27,3 +31,14 @@ jobs:
     - uses: leotaku/elisp-check@master
       with:
         file: gnus-browse-url-in-article.el
+
+    - name: Run melpazoid checks
+      env:
+        LOCAL_REPO: ${{ github.workspace }}
+        # RECIPE is your recipe as written for MELPA:
+        RECIPE: (gnus-browse-url-in-article :fetcher github :repo "jmibanez/gnus-browse-url-in-article")
+        # set this to true if warnings should be treated as errors:
+        WARN_IS_ERROR: false
+        # set this to false (or remove it) if the package isn't on MELPA:
+        EXIST_OK: false
+      run: echo $GITHUB_REF && make -C ~/melpazoid
