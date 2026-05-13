@@ -1,6 +1,6 @@
 # gnus-browse-url-in-article: Smartly open URLs in Gnus articles
 
-[![Build Status](https://github.com/jmibanez/gnus-browse-url-in-article/actions/workflows/ci.yaml/badge.svg)](https://github.com/jmibanez/gnus-browse-url-in-article/actions/workflows/ci.yaml)[![MELPA](https://melpa.org/packages/gnus-browse-url-in-article.svg)](https://melpa.org/#/australia-holidays)
+[![Build Status](https://github.com/jmibanez/gnus-browse-url-in-article/actions/workflows/ci.yaml/badge.svg)](https://github.com/jmibanez/gnus-browse-url-in-article/actions/workflows/ci.yaml)[![MELPA](https://melpa.org/packages/gnus-browse-url-in-article.svg)](https://melpa.org/#/gnus-browse-url-in-article)
 
 Do you ever open an HTML article full of links and want a way to quickly browse to a particular URL in that article? Do you maintain GitHub projects and want to quickly jump to the relevant pull request when reading an email notification from GitHub?
 
