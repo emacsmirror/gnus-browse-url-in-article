@@ -430,15 +430,71 @@ corresponding /click/ tracking URLs, pairing them for `completing-read'.")
          (list vib-link))))))
 
 
+;; ---------- Built-in handler: Medium Digests ----------
+
+(defclass gnus-browse-url-in-article-medium-digest-handler (gnus-browse-url-in-article-html-handler)
+  ()
+  "URL handler for Medium Digest emails.
+Extracts article titles paired with author names, returning
+a (\"Title - Author\" . url) alist for `completing-read'.")
+
+(cl-defmethod gnus-browse-url-in-article-handler-matches-p ((_h gnus-browse-url-in-article-medium-digest-handler))
+  (when-let* ((from (mail-header-from (gnus-summary-article-header))))
+    (string-match-p "noreply@medium\\.com" from)))
+
+(cl-defmethod gnus-browse-url-in-article-handler-get-html-urls ((_h gnus-browse-url-in-article-medium-digest-handler)
+                                                                html-handle dom)
+  (let (flat-nodes result seen-urls)
+    (cl-labels ((walk (node)
+                  (when (and (listp node) (symbolp (car node)))
+                    (let* ((tag  (car node))
+                           (href (dom-attr node 'href)))
+                      (cond
+                       ;; Article link: <a> with a direct <h2> child
+                       ((and (eq tag 'a)
+                             (dom-child-by-tag node 'h2))
+                        (push (cons 'article node) flat-nodes))
+                       ;; Author link: <a href="...medium.com/@..."> with non-empty text
+                       ((and (eq tag 'a)
+                             href
+                             (string-match-p "medium\\.com/@" href)
+                             (not (string-empty-p
+                                   (string-trim (dom-texts node "")))))
+                        (push (cons 'author node) flat-nodes))
+                       (t
+                        (mapc #'walk (cddr node))))))))
+      (walk dom))
+    (setq flat-nodes (nreverse flat-nodes))
+    (let (last-author)
+      (dolist (entry flat-nodes)
+        (if (eq (car entry) 'author)
+            (setq last-author (cdr entry))
+          (let* ((link    (cdr entry))
+                 (href    (dom-attr link 'href))
+                 (url     (replace-regexp-in-string "\\?.*" "" href))
+                 (h2      (dom-child-by-tag link 'h2))
+                 (title   (string-trim (dom-texts h2 "")))
+                 (author  (and last-author
+                               (string-trim (dom-texts last-author ""))))
+                 (display (if (and author (not (string-empty-p author)))
+                              (format "%s - %s" title author)
+                            title)))
+            (unless (or (string-empty-p title) (member url seen-urls))
+              (push url seen-urls)
+              (push (cons display url) result))))))
+    (nreverse result)))
+
+
 ;; ---------- Default handler registry ----------
 
 (defvar gnus-browse-url-in-article-default-handlers
   (list (make-instance 'gnus-browse-url-in-article-github-pr-handler)
         (make-instance 'gnus-browse-url-in-article-linkedin-jobs-handler)
-        (make-instance 'gnus-browse-url-in-article-ars-technica-handler))
+        (make-instance 'gnus-browse-url-in-article-ars-technica-handler)
+        (make-instance 'gnus-browse-url-in-article-medium-digest-handler))
   "Built-in handler instances tried before user-supplied handlers.
-Covers GitHub PR notifications, LinkedIn job alerts, and Ars Technica
-newsletters.")
+Covers GitHub PR notifications, LinkedIn job alerts, Ars Technica
+newsletters, and Medium digest emails.")
 
 (defun gnus-browse-url-in-article-make-handler (predicate handler-fn)
   "Create a function-handler from PREDICATE and HANDLER-FN.
