@@ -443,7 +443,7 @@ a (\"Title - Author\" . url) alist for `completing-read'.")
     (string-match-p "noreply@medium\\.com" from)))
 
 (cl-defmethod gnus-browse-url-in-article-handler-get-html-urls ((_h gnus-browse-url-in-article-medium-digest-handler)
-                                                                html-handle dom)
+                                                                _html-handle dom)
   (let (flat-nodes result seen-urls)
     (cl-labels ((walk (node)
                   (when (and (listp node) (symbolp (car node)))
